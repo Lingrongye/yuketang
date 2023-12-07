@@ -7,8 +7,8 @@ import json
 
 # 以下的csrftoken和sessionid需要改成自己登录后的cookie中对应的字段！！！！而且脚本需在登录雨课堂状态下使用
 # 登录上雨课堂，然后按右键->检查-->选Application-->找到雨课堂的cookies，寻找csrftoken、sessionid字段，并复制到下面两行即可
-csrftoken = ""  # 需改成自己的
-sessionid = ""  # 需改成自己的
+csrftoken = '' # 需改成自己的
+sessionid = '' # 需改成自己的
 university_id = "2627"  # 华南理工大学的id，不用改
 url_root = "https://changjiang.yuketang.cn/"
 learning_rate = 200  # 学习速率，好像再改大一点也没什么用
@@ -26,7 +26,7 @@ headers = {
     'x-csrftoken': csrftoken,
 'referer': 'https://changjiang.yuketang.cn/v2/web/studentLog/15025097',
     # 'uv-id': '2627',
-'classroom-id': '15025097',
+# 'classroom-id': '15025097',
     'xtbz': 'ykt',
 # 'university-id': '2627',
 }
@@ -131,6 +131,48 @@ def one_video_watcher(video_name, video_id, classroomid, cid, user_id, skuid):
     print("视频" + video_id + " " + video_name + "学习完成！")
     return 1
 
+def discuss(discuss_title, leaf_id,classroomid,skuid,topic_type):
+    params1 = {
+        'classroom_id':classroomid,
+        'sku_id': skuid,
+        'leaf_id': leaf_id,
+        'topic_type': topic_type,
+        'channel': 'xt',
+    }
+    # 获取讨论课题的id，以及用户id
+    response = requests.get('https://changjiang.yuketang.cn/v/discussion/v2/unit/discussion/', params=params1,
+                            cookies=cookies, headers=headers)
+    discuss_user_info = json.loads(response.text)
+    discuss_user_id = discuss_user_info['data']['user_id']
+    discuss_id = discuss_user_info['data']['id']
+
+    # 获取别人发送的讨论的内容
+    discuss_url = "https://changjiang.yuketang.cn/v/discussion/v2/comment/list/"+str(discuss_id)+"/"
+    params2 = {
+        'offset': 0,
+        'limit': 10,
+        'web': 'web'
+    }
+    response = requests.get(discuss_url, params=params2, cookies=cookies, headers=headers)
+    discuss_info = json.loads(response.text)
+    discuss_content = discuss_info['data']['new_comment_list']['results'][0]['content']['text']
+
+# 发表评论的参数
+    json_data = {
+        'to_user': int(discuss_user_id),
+        'topic_id': int(discuss_id),
+        'content': {
+            'text': str(discuss_content),
+            'upload_images': [],
+            'accessory_list': [],
+        },
+    }
+# 评论
+    comment_response = json.loads(requests.post('https://changjiang.yuketang.cn/v/discussion/v2/comment/', cookies=cookies,
+                             headers=headers,
+                             json=json_data).text)
+    if comment_response['success']:
+        print(discuss_title,'的讨论任务已经完成')
 
 
 if __name__ == "__main__":
@@ -158,16 +200,27 @@ if __name__ == "__main__":
     content_info_all = video_info['data']['content_info']
     sku_id = video_info['data']['s_id']
     all_video_info = []
+    all_discuss_info = []
     for content_info in content_info_all:
         section_list = content_info['section_list']
+        discuss_leaf_list = content_info['leaf_list']
+        for discuss_leaf in discuss_leaf_list:
+            all_discuss_info.append([discuss_leaf['title'],discuss_leaf['id'],discuss_leaf['leaf_type']])
         for list in section_list:
             leaf_list = list['leaf_list']
             for leaf in leaf_list:
                 video_name = leaf['title']
                 video_id = str(leaf['id'])
                 all_video_info.append([video_name,video_id])
+    for discuss_info in all_discuss_info:
+        title = discuss_info[0]
+        leaf = discuss_info[1]
+        type = discuss_info[2]
+        discuss(title,leaf,classroom_id,sku_id,type)
+
     for video_info in all_video_info:
         one_video_watcher(video_info[0],video_info[1],classroom_id,course_id,user_id,sku_id)
+
 
 
 

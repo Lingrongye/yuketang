@@ -104,7 +104,7 @@ def one_video_watcher(video_name, video_id, classroomid, cid, user_id, skuid):
 
         data = {"heart_data": heart_data}
         r = requests.post(url=url, headers=headers, json=data,cookies=cookies)
-        print(r.text)
+        # print(r.text)
         heart_data = []
         submit_url = 'https://changjiang.yuketang.cn/video-log/heartbeat/'
         try:
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     user_info_url = "https://changjiang.yuketang.cn/v2/api/web/userinfo"
     user_id = json.loads(requests.get(url=user_info_url,headers=headers,cookies=cookies).text)['data'][0]['user_id']
     time.sleep(random.randint(1,3))
-    course_name = '2024春-形势与政策课'
+    course_name = '2025春-形势与政策课'
     course_info = requests.get('https://changjiang.yuketang.cn/v2/api/web/courses/list?identity=2',headers=headers,cookies=cookies)
     time.sleep(random.randint(1, 3))
     # course_lists = json.loads(course_info.text)['data']['list']
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     # print("====================================")
     # print(course_lists)
     course_id = '2588039'
-    classroom_id = '16978956'
+    classroom_id = '20774877'
     # for list in course_lists:
     #     print(list['course']['name'])
     #     if list['name'] == course_name:
@@ -201,11 +201,11 @@ if __name__ == "__main__":
     #     exit(0)
 
     headers['classroom-id'] = str(classroom_id)
-    video_info = json.loads(requests.get('https://changjiang.yuketang.cn/c27/online_courseware/xty/kls/pub_news/673117/',headers=headers,cookies=cookies).text)
+    video_info = json.loads(requests.get('https://changjiang.yuketang.cn/c27/online_courseware/xty/kls/pub_news/1085179/',headers=headers,cookies=cookies).text)
     time.sleep(random.randint(1, 3))
     content_info_all = video_info['data']['content_info']
 
-    print(content_info_all)
+    # print(content_info_all)
     sku_id = video_info['data']['s_id']
     all_video_info = []
     all_discuss_info = []
@@ -214,20 +214,21 @@ if __name__ == "__main__":
         discuss_leaf_list = content_info['leaf_list']
         for discuss_leaf in discuss_leaf_list:
             all_discuss_info.append([discuss_leaf['title'],discuss_leaf['id'],discuss_leaf['leaf_type']])
-        for list in section_list:
-            leaf_list = list['leaf_list']
-            for leaf in leaf_list:
-                video_name = leaf['title']
-                video_id = str(leaf['id'])
-                all_video_info.append([video_name,video_id])
+
+        for list in discuss_leaf_list:
+            video_name = list['title']
+            video_id = str(list['id'])
+            all_video_info.append([video_name,video_id])
+ 
+
+    for video_info in all_video_info:
+        one_video_watcher(video_info[0],video_info[1],classroom_id,course_id,user_id,sku_id)
+
     for discuss_info in all_discuss_info:
         title = discuss_info[0]
         leaf = discuss_info[1]
         type = discuss_info[2]
         discuss(title,leaf,classroom_id,sku_id,type)
-
-    for video_info in all_video_info:
-        one_video_watcher(video_info[0],video_info[1],classroom_id,course_id,user_id,sku_id)
 
 
 
